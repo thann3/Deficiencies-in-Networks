@@ -1,11 +1,14 @@
-#Federated Learning with single-variable loss function
-#When an edge is disconnected, agradient step is performed on itself
-#Simulates lack of communication link
-
 import numpy as np
 import tensorflow as tf
 
-np.random.seed(42)
+#Ensure reproducibility
+seed = 42
+np.random.seed(seed)
+tf.random.set_seed(seed)
+
+num_rounds = 10000
+probability_to_disconnect = 1
+learning_rate = 0.01
 
 # Define the cost function: (x_i - c_i)^2
 def cost_function(x, c):
@@ -25,6 +28,9 @@ num_nodes = 5
 nodes = [tf.Variable(np.random.randn(1).astype(np.float32)) for _ in range(num_nodes)]
 global_model = tf.Variable(np.random.randn(1).astype(np.float32))
 
+# Initialize the dictionary to keep track of straggler counts for each node
+straggler_counts = {i: 0 for i in range(num_nodes)}
+
 # Function to simulate a round of asynchronous federated learning
 def train_one_round(global_model, nodes, c_values, learning_rate, probability_to_disconnect, straggler_counts):
     # Perform updates for each node
@@ -41,10 +47,14 @@ def train_one_round(global_model, nodes, c_values, learning_rate, probability_to
 
     # Perform gradient steps on disconnected nodes until they reconnect
     for disconnected_node in disconnected_nodes:
-        with tf.GradientTape() as tape:
-            cost = cost_function(disconnected_node, c_values[nodes.index(disconnected_node)])
-        gradients = tape.gradient(cost, disconnected_node)
-        disconnected_node.assign_sub(learning_rate * gradients)
+        if np.random.rand() > probability_to_disconnect:
+            with tf.GradientTape() as tape:
+                cost = cost_function(disconnected_node, c_values[nodes.index(disconnected_node)])
+            gradients = tape.gradient(cost, disconnected_node)
+            disconnected_node.assign_sub(learning_rate * gradients)
+        else:
+            # Node remains disconnected for this round, increment the straggler count
+            straggler_counts[nodes.index(disconnected_node)] += 1
 
     # Aggregate models using FedAvg
     models = [node.numpy() for node in nodes if np.random.rand() > probability_to_disconnect]
@@ -59,14 +69,11 @@ def train_one_round(global_model, nodes, c_values, learning_rate, probability_to
 
 # Function to run multiple rounds of asynchronous federated learning
 def run_federated_learning(num_rounds, probability_to_disconnect, learning_rate):
-    # Initialize the dictionary to keep track of straggler counts for each node
-    straggler_counts = {i: 0 for i in range(num_nodes)}
-
     # Print the initial estimates of the nodes
     initial_x_values = [node.numpy()[0] for node in nodes]
     print("Initial x values:", initial_x_values)
 
-    for round in range(num_rounds):
+    for _ in range(num_rounds):
         train_one_round(global_model, nodes, c_values, learning_rate, probability_to_disconnect, straggler_counts)
 
     # Get the final x values and the optimal solution x*
@@ -74,9 +81,18 @@ def run_federated_learning(num_rounds, probability_to_disconnect, learning_rate)
     optimal_x = 3
 
     print("Final x values:", final_x_values)
+    mean_x = np.mean(final_x_values)
+
+    print("Mean x values:", mean_x)
     print("Optimal solution:", optimal_x)
 
-    # Print the straggler counts for each node
+    # Calculate the sum of the L1 norms of the final values with respect to x=3
+    l1_norm_sum = np.sum([abs(final_x - optimal_x) for final_x in final_x_values])
+
+    # Print the sum of the L1 norms of the final values
+    print("L1 norm:", l1_norm_sum)
+
+    # Print the straggler counts for each node after the rounds are completed
     print("Straggler counts:", straggler_counts)
 
-run_federated_learning(num_rounds=1000, probability_to_disconnect=0.9, learning_rate=0.1)
+run_federated_learning(num_rounds, probability_to_disconnect, learning_rate)
