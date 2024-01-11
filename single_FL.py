@@ -11,7 +11,7 @@ np.random.seed(seed)
 tf.random.set_seed(seed)
 
 num_rounds = 10000
-probability_to_disconnect = 0
+probability_to_disconnect = 1
 learning_rate = 0.01
 
 # Define the cost function: (x_i - c_i)^2
