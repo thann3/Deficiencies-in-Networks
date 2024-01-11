@@ -1,4 +1,4 @@
-#Simulates lack of computation power
+#Simulates weak edge
 #Federated Learning with MNIST
 #When an edge is disconnected, a gradient step is still performed on itself
 
@@ -18,7 +18,7 @@ transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5
 mnist_dataset = MNIST(root="./data", train=True, transform=transform, download=True)
 mnist_train, mnist_val = random_split(mnist_dataset, [50000, 10000])
 
-disconnect_prob = 0.4
+disconnect_prob = 0.9
 num_epochs = 100
 
 class SimpleNet(nn.Module):
@@ -56,7 +56,7 @@ def create_random_imbalanced_subset(dataset, total_samples):
     return create_imbalanced_subset(dataset, proportions)
 
 def run_federated_learning_with_random_heterogeneous_data(disconnect_prob, num_epochs=num_epochs):
-    total_samples_per_client = [4000, 4000, 4000, 4000, 4000]
+    total_samples_per_client = [10000, 10000, 10000, 10000, 10000]
     num_clients = len(total_samples_per_client)
     avg_samples_per_client = sum(total_samples_per_client) // len(total_samples_per_client)
     remaining_samples = sum(total_samples_per_client) - (avg_samples_per_client * len(total_samples_per_client))
