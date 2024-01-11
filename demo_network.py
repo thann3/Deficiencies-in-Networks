@@ -5,6 +5,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Parameters
+num_epochs = 10000
+learning_rate = 0.01
+edge_disconnect_prob = 1
+
 np.random.seed(42)
 
 # Network structure (node connections)
@@ -69,11 +74,6 @@ def asynchronous_decentralized_gradient_descent(num_epochs, learning_rate, edge_
 
     return all_estimates
 
-# Parameters
-num_epochs = 10000
-learning_rate = 0.01
-edge_disconnect_prob = 1 #Set the probability of edge disconnection here (0.5 for 50%)
-
 # Print initial estimated values for clients 1, 2, 3, 4, and 5
 initial_estimates = np.random.uniform(0, 5, num_nodes)
 for node in range(1, num_nodes + 1):
@@ -88,12 +88,16 @@ x_star = np.mean(c_values)
 print(f"x*: {x_star:.2f}")
 
 L1_norm = 0
+mean_x = 0
 # Print final estimated values for clients 1, 2, 3, 4, and 5
 for node in range(1, num_nodes + 1):
     final_estimate = all_estimates[-1][node - 1]
+    mean_x += final_estimate
     print(f"Final x{node}: {final_estimate:.2f}")
     L1_norm += abs(final_estimate-3)
-    print("L1_normATP", L1_norm)
 
-print(L1_norm)
+mean_x /= num_nodes
+
+print("Mean:", mean_x)
+print("L1_norm:", L1_norm)
 
