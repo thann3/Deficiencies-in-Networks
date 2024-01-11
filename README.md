@@ -1,2 +1,2 @@
-# The Consequences of Asynchronous Communication in Distributed Optimization Networks and Federated Learning
+# The Consequences of Communication Deficiencies in Distributed Optimization Networks
 
